@@ -6,8 +6,8 @@ namespace RecordingStudio.Models
     {
         public int Id { get; set; }
         
-        public DateTime DateTime { get; set; }
-        public bool IsActive { get; set; }
+        public DateTime FromDateTime { get; set; }
+        public DateTime ToDateTime { get; set; }
         
         /// <summary>
         /// true - оплачено
@@ -17,8 +17,9 @@ namespace RecordingStudio.Models
 
         public int UserId { get; set; }
         public User User { get; set; }
+        
+        public int StudioId { get; set; }
+        public Studio Studio { get; set; }
 
-        public int PriceId { get; set; }
-        public Price Price { get; set; }
     }
 }

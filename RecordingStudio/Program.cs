@@ -3,17 +3,32 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using RecordingStudio.Initializers;
+using RecordingStudio.Models;
 
 namespace RecordingStudio
 {
     public class Program
     {
-        public static void Main(string[] args)
+        public static async Task Main(string[] args)
         {
-            CreateHostBuilder(args).Build().Run();
+            var host = CreateHostBuilder(args).Build();
+            
+            var serviceScope = host.Services.CreateScope();
+            var services = serviceScope.ServiceProvider;
+            var migrationInitializer = services.GetRequiredService<MigrationInitializer>();
+            var userManager = services.GetRequiredService<UserManager<User>>();
+            var rolesManager = services.GetRequiredService<RoleManager<IdentityRole<int>>>();
+            await migrationInitializer.Run();
+            await RoleInitializer.InitializeRoleAsync(rolesManager);
+            await UserInitializer.InitializeUserAsync(userManager);
+            await host.RunAsync();
+            
         }
 
         public static IHostBuilder CreateHostBuilder(string[] args) =>

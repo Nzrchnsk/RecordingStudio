@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using AutoMapper.EquivalencyExpression;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -14,7 +15,10 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Microsoft.VisualStudio.Web.CodeGeneration.Utils.Messaging;
+using RecordingStudio.Initializers;
+using RecordingStudio.Interfaces;
 using RecordingStudio.Models;
+using RecordingStudio.Repositories;
 
 namespace RecordingStudio
 {
@@ -25,15 +29,29 @@ namespace RecordingStudio
             Configuration = configuration;
         }
 
-        public IConfiguration Configuration { get; }
+        public static IConfiguration Configuration { get; set; }
+
         readonly string CorsPolicy = "AllowOrigin";
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddControllersWithViews();
+            services.AddCors();
+
+            services.AddControllers().AddNewtonsoftJson(options =>
+                options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore);
+
             services.AddDbContext<RecordingStudioDbContext>(options =>
                            options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
-            services.AddIdentity<User, IdentityRole<int>>().AddEntityFrameworkStores<RecordingStudioDbContext>();
+            services.AddIdentity<User, IdentityRole<int>>(opts =>
+            {
+                #region Настройки валидации пароля
+                opts.Password.RequiredLength = 1; // минимальная длина
+                opts.Password.RequireNonAlphanumeric = false; // требуются ли не алфавитно-цифровые символы
+                opts.Password.RequireLowercase = false; // требуются ли символы в нижнем регистре
+                opts.Password.RequireUppercase = false; // требуются ли символы в верхнем регистре
+                opts.Password.RequireDigit = false; // требуются ли цифры
+                #endregion
+            }).AddEntityFrameworkStores<RecordingStudioDbContext>();
 
             services.AddSwaggerGen(c =>
             {
@@ -86,11 +104,16 @@ namespace RecordingStudio
                     ValidateIssuerSigningKey = true,
                 };
             });
-            services.AddCors(options =>
-            {
-                options.AddPolicy(CorsPolicy, options => options.AllowAnyOrigin());
-            });
+            
+            services.AddScoped(typeof(IAsyncRepository<>), typeof(EfRepository<>));
 
+            services.AddTransient<MigrationInitializer>();
+            
+            services.AddAutoMapper(e =>
+            {
+                e.AddProfile<AutoMapperProfile>();
+                e.AddCollectionMappers();
+            });
 
 
         }
@@ -112,6 +135,12 @@ namespace RecordingStudio
             app.UseStaticFiles();
 
             app.UseRouting();
+            app.UseCors(x => x
+                .AllowAnyMethod()
+                .AllowAnyHeader()
+                .SetIsOriginAllowed(origin => true) 
+                .AllowCredentials()); 
+            
             app.UseAuthentication();
             app.UseAuthorization();
             app.UseSwagger();

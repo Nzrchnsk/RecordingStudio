@@ -9,7 +9,8 @@ namespace RecordingStudio.Models
         public string Name { get; set; }
         public string Description { get; set; }
         public string Address { get; set; }
-
-        public List<Price> Prices { get; set; }
+        public double Price { get; set; }
+        
+        public List<Order> Orders { get; set; }
     }
 }

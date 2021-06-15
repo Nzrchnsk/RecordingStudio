@@ -3,15 +3,17 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using RecordingStudio.Models;
 
 namespace RecordingStudio.Migrations
 {
     [DbContext(typeof(RecordingStudioDbContext))]
-    partial class RecordingStudioDbContextModelSnapshot : ModelSnapshot
+    [Migration("20210615195446_EditPriceLogic")]
+    partial class EditPriceLogic
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -156,24 +158,19 @@ namespace RecordingStudio.Migrations
                         .HasColumnType("int")
                         .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
-                    b.Property<DateTime>("FromDateTime")
+                    b.Property<DateTime>("DateTime")
                         .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
 
                     b.Property<bool>("PaymentStatus")
                         .HasColumnType("bit");
-
-                    b.Property<int>("StudioId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("ToDateTime")
-                        .HasColumnType("datetime2");
 
                     b.Property<int>("UserId")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("StudioId");
 
                     b.HasIndex("UserId");
 
@@ -324,26 +321,13 @@ namespace RecordingStudio.Migrations
 
             modelBuilder.Entity("RecordingStudio.Models.Order", b =>
                 {
-                    b.HasOne("RecordingStudio.Models.Studio", "Studio")
-                        .WithMany("Orders")
-                        .HasForeignKey("StudioId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.HasOne("RecordingStudio.Models.User", "User")
                         .WithMany("Orders")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Studio");
-
                     b.Navigation("User");
-                });
-
-            modelBuilder.Entity("RecordingStudio.Models.Studio", b =>
-                {
-                    b.Navigation("Orders");
                 });
 
             modelBuilder.Entity("RecordingStudio.Models.User", b =>

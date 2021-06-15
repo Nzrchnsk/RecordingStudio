@@ -1,21 +1,29 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using RecordingStudio.Dto;
+using RecordingStudio.Interfaces;
 using RecordingStudio.Models;
 
 namespace RecordingStudio.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/studios")]
     [ApiController]
     public class StudioController : Controller
     {
         private readonly RecordingStudioDbContext _context;
+        private readonly IAsyncRepository<Studio> _studioRepository;
+        private readonly IMapper _mapper;
 
-        public StudioController(RecordingStudioDbContext context)
+        public StudioController(RecordingStudioDbContext context, IMapper mapper,
+            IAsyncRepository<Studio> studioRepository)
         {
+            _studioRepository = studioRepository;
+            _mapper = mapper;
             _context = context;
         }
 
@@ -44,18 +52,21 @@ namespace RecordingStudio.Controllers
         // PUT: api/Test/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutStudio(int id, Studio studio)
+        public async Task<IActionResult> PutStudio(int id, [FromBody] StudioDto request)
         {
-            if (id != studio.Id)
+            var studio = await _studioRepository.GetByIdAsync(id);
+            if (studio is null)
             {
-                return BadRequest();
+                return NotFound();
             }
-
-            _context.Entry(studio).State = EntityState.Modified;
 
             try
             {
-                await _context.SaveChangesAsync();
+                studio.Address = request.Address;
+                studio.Description= request.Description;
+                studio.Price= request.Price;
+                studio.Name= request.Name;
+                await _studioRepository.UpdateAsync(studio);
             }
             catch (DbUpdateConcurrencyException)
             {
@@ -75,21 +86,13 @@ namespace RecordingStudio.Controllers
         // POST: api/Test
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<Studio>> PostStudio(Studio studio)
+        public async Task<ActionResult<Studio>> PostStudio([FromBody]Studio studio)
         {
-            _context.Studios.Add(studio);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction("GetStudio",
-                new
-                {
-                    id = studio.Id
-                },
-                studio);
+            return await _studioRepository.AddAsync(studio);
         }
 
         // DELETE: api/Test/5
-        [HttpDelete("{id}")]
+        [HttpDelete("{id:int}")]
         public async Task<IActionResult> DeleteStudio(int id)
         {
             var studio = await _context.Studios.FindAsync(id);
@@ -98,8 +101,7 @@ namespace RecordingStudio.Controllers
                 return NotFound();
             }
 
-            _context.Studios.Remove(studio);
-            await _context.SaveChangesAsync();
+            await _studioRepository.DeleteAsync(studio);
 
             return NoContent();
         }
