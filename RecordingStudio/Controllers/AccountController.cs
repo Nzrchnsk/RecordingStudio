@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using System;
 using System.Collections.Generic;
+using System.Data.Entity;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Security.Claims;
@@ -91,9 +92,9 @@ namespace RecordingStudio.Controllers
             return new JsonResult(response);
         }
 
-        private async Task<ClaimsIdentity> GetIdentity(string email, string password)
+        private async Task<ClaimsIdentity> GetIdentity(string userName, string password)
         {
-            User user = await _userManager.FindByNameAsync(email);
+            User user =  _userManager.Users.FirstOrDefault(u=>u.UserName == userName);
             // добавляем пользователя
             var result = await _userManager.CheckPasswordAsync(user, password);
             if (user != null && result)

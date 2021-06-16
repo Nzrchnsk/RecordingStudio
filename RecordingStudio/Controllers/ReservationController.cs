@@ -101,8 +101,8 @@ namespace RecordingStudio.Controllers
                     message = "Время начала не может быть больше времени окончания"
                 });
             }
-            if (!(request.FromTime > 10 && request.FromTime < 17 && request.ToTime > 11 && request.ToTime < 18))
-                return new JsonResult(new
+            if (!(request.FromTime >= 10 && request.FromTime < 17 && request.ToTime > 11 && request.ToTime <= 18))
+                    return new JsonResult(new
                 {
                     success = false,
                     message = "Время работы студии с 10:00 до 18:00"
